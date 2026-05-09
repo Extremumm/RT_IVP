@@ -3,7 +3,6 @@
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{amsmath,amssymb,bm}
 \usepackage{physics}
-\usepackage{siunitx}
 \usepackage{mathtools}
 \usepackage{xcolor}
 \usepackage{hyperref}
@@ -42,6 +41,39 @@
 This note summarizes the linear initial-value formulation implemented in the latest Mathematica notebook.  Two inviscid, incompressible, irrotational fluids are separated by a nominally flat interface at $z=0$ and are bounded by rigid horizontal walls at $z=H_1$ and $z=-H_2$.  The initial interface is flat, but an interfacial vertical perturbation velocity $v_0(x)$ is imposed at $t=0$.  The resulting dynamics are solved mode by mode using the finite-depth Rayleigh--Taylor dispersion relation with surface tension.
 \end{abstract}
 
+\section{Introduction}
+
+\subsection{Physical motivation}
+
+The Rayleigh--Taylor instability (RTI) is one of the most fundamental interfacial instabilities in fluid mechanics.  It occurs whenever a heavier fluid is supported against gravity by a lighter fluid, or more generally, whenever a density gradient is antiparallel to an effective acceleration.  Small perturbations to the nominally flat interface grow because the system can lower its gravitational potential energy by exchanging the positions of heavier and lighter fluid parcels.  Surface tension opposes this exchange at short wavelengths by penalizing the increase in interfacial area, leading to a finite band of unstable wavenumbers.
+
+The instability is named after Lord Rayleigh, who first analyzed the stability of superposed fluid layers at rest in his seminal 1883 paper~\cite{rayleigh1883}, and G.~I.~Taylor, who extended the analysis to the case of a uniformly accelerated interface and confirmed the theory experimentally in 1950~\cite{taylor1950}.  The comprehensive linear theory, including the effects of viscosity, surface tension, and magnetic fields, was systematized by Chandrasekhar~\cite{chandrasekhar1961}.
+
+\subsection{Applications}
+
+The Rayleigh--Taylor instability appears across an extraordinary range of physical scales:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Inertial confinement fusion (ICF).}  During the implosion phase of an ICF capsule, the ablation front is Rayleigh--Taylor unstable.  Growth of RT perturbations can cause capsule breakup and quench the fusion yield.  Understanding the linear growth phase, including finite-shell-thickness (finite-depth) corrections, is essential for target design~\cite{sharp1984}.
+
+    \item \textbf{Astrophysics.}  RTI governs the fragmentation of supernova remnant shells, the morphology of the Crab Nebula's filaments, and mixing at composition interfaces inside stars.  Finite-depth effects are relevant whenever the density layers have thicknesses comparable to the perturbation wavelength.
+
+    \item \textbf{Geophysics and atmospheric science.}  Salt diapirs rising through sedimentary layers, mantle convection at density-stratified boundaries, and the breakup of cold fronts in the atmosphere all involve RT-type dynamics.
+
+    \item \textbf{Industrial flows.}  Coating processes, spray formation, and the dynamics of liquid layers on inverted substrates are influenced by the RT mechanism, often in regimes where finite container depth matters.
+\end{itemize}
+
+\subsection{Scope of this note}
+
+This note develops the \emph{linear initial-value problem} (IVP) for the Rayleigh--Taylor instability with the following modeling choices:
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Inviscid, incompressible, irrotational flow.}  Each fluid is described by a velocity potential satisfying Laplace's equation.  This is the simplest model that captures the essential mechanism and is the starting point for more elaborate analyses.
+    \item \textbf{Finite fluid depths.}  The upper and lower fluids are bounded by rigid horizontal walls at $z=H_1$ and $z=-H_2$.  This generalizes the classical deep-water analysis and is physically relevant whenever perturbation wavelengths are comparable to the layer thicknesses.
+    \item \textbf{Surface tension.}  The pressure jump across the interface is related to the interface curvature through the Young--Laplace equation, providing a short-wave cutoff that bounds the spectrum of unstable modes.
+    \item \textbf{Initial-value formulation.}  Rather than the normal-mode (eigenvalue) approach that assumes time dependence $e^{st}$ from the outset, the note solves the second-order modal ODE for each Fourier component with prescribed initial displacement and velocity.  This formulation simultaneously captures growing, decaying, and oscillatory modes.
+    \item \textbf{Two-dimensional perturbations.}  All perturbations are taken to be independent of the $y$-coordinate.  By Squire's theorem for inviscid parallel flows, the two-dimensional problem is sufficient to determine the stability boundary~\cite{drazin_reid2004}.
+\end{enumerate}
+The analysis proceeds from first principles: the full governing equations are stated, linearized about the hydrostatic base state, and reduced to a second-order ODE for each Fourier mode.  The resulting dispersion relation, its stability properties, limiting behaviours, and energy interpretation are derived in detail.  A Mathematica implementation is provided and verified against analytical consistency conditions.
+
 \section{Geometry and assumptions}
 
 The upper fluid occupies
@@ -77,23 +109,124 @@ Thus, the interface is initially flat, and the perturbation is introduced throug
 
 This section records the mathematical ingredients used later in the note.  The goal is to make clear where the modal equation, the finite-depth factors, and the verification tests come from.
 
-\subsection{Linearized potential-flow model}
+\subsection{Governing equations: incompressible Euler system}
 
-Each fluid is assumed inviscid, incompressible, and irrotational.  Therefore the perturbation velocity in fluid $j$ can be represented by a velocity potential
+The starting point is the two-dimensional incompressible Euler system for each fluid ($j=1$ upper, $j=2$ lower).  Denote the velocity field by $\bm{U}_j=(U_j,W_j)$, the pressure by $P_j$, and the (constant) density by $\rho_j$.  The governing equations are:
+
+\medskip\noindent
+\textbf{Continuity (incompressibility):}
+\begin{equation}
+    \nabla\cdot\bm{U}_j
+    =
+    \partial_x U_j + \partial_z W_j
+    =
+    0.
+    \label{eq:euler_continuity}
+\end{equation}
+
+\textbf{Momentum:}
+\begin{equation}
+    \rho_j\left(\partial_t \bm{U}_j + \bm{U}_j\cdot\nabla\bm{U}_j\right)
+    =
+    -\nabla P_j + \rho_j \bm{g},
+    \label{eq:euler_momentum}
+\end{equation}
+where $\bm{g}=(0,-g)$ is the gravitational acceleration.  Written in component form:
+\begin{align}
+    \rho_j\left(\partial_t U_j + U_j\partial_x U_j + W_j\partial_z U_j\right)
+    &= -\partial_x P_j,
+    \label{eq:euler_x_momentum}\\
+    \rho_j\left(\partial_t W_j + U_j\partial_x W_j + W_j\partial_z W_j\right)
+    &= -\partial_z P_j - \rho_j g.
+    \label{eq:euler_z_momentum}
+\end{align}
+
+\subsection{Hydrostatic base state}
+
+When the interface is flat and the fluids are at rest, the velocity vanishes everywhere and the pressure is purely hydrostatic.  Setting $\bm{U}_j=\bm{0}$ in \eqref{eq:euler_momentum} gives
+\begin{equation}
+    \nabla \bar{P}_j = \rho_j \bm{g},
+\end{equation}
+so the base-state pressure depends only on $z$:
+\begin{equation}
+    \bar{P}_j(z) = P_0 - \rho_j g z,
+    \label{eq:hydrostatic_pressure}
+\end{equation}
+where $P_0$ is the (common) reference pressure at the interface $z=0$.  Continuity of pressure at the unperturbed interface requires
+\begin{equation}
+    \bar{P}_1(0) = \bar{P}_2(0) = P_0.
+\end{equation}
+Note that $\bar{P}_1(z) \neq \bar{P}_2(z)$ for $z\neq 0$ unless $\rho_1=\rho_2$; this mismatch across the displaced interface is precisely what drives the instability.
+
+\subsection{Perturbation decomposition and linearization}
+
+Decompose each field into its base-state and perturbation parts:
+\begin{equation}
+    \bm{U}_j = \underbrace{\bm{0}}_{\text{base}} + \bm{u}_j,
+    \qquad
+    P_j = \bar{P}_j(z) + p_j,
+\end{equation}
+where $\bm{u}_j=(u_j,w_j)$ and $p_j$ are assumed small.  Substituting into \eqref{eq:euler_continuity} gives the perturbation continuity equation
+\begin{equation}
+    \partial_x u_j + \partial_z w_j = 0.
+    \label{eq:perturbation_continuity}
+\end{equation}
+Substituting into \eqref{eq:euler_momentum} and subtracting the base-state balance yields
+\begin{equation}
+    \rho_j\left(\partial_t\bm{u}_j + \bm{u}_j\cdot\nabla\bm{u}_j\right)
+    =
+    -\nabla p_j.
+    \label{eq:perturbation_momentum_nonlinear}
+\end{equation}
+\textbf{Linearization} consists of dropping the quadratic term $\bm{u}_j\cdot\nabla\bm{u}_j$, which is $O(|\bm{u}_j|^2)$:
+\begin{equation}
+    \boxed{
+    \rho_j\,\partial_t\bm{u}_j
+    =
+    -\nabla p_j.
+    }
+    \label{eq:linearized_momentum}
+\end{equation}
+This is valid when the perturbation velocities are much smaller than any characteristic velocity scale of the problem.  In the present context (zero base-state velocity), the linearization is valid as long as $|\bm{u}_j| \ll \sqrt{gL}$, or equivalently, as long as the interface displacement remains much smaller than the perturbation wavelength: $|\eta| \ll \lambda = 2\pi/k$.
+
+\subsection{Irrotationality and the velocity potential}
+
+The perturbation vorticity in two dimensions is the scalar
+\begin{equation}
+    \omega_j = \partial_x w_j - \partial_z u_j.
+\end{equation}
+Taking the curl of the linearized momentum equation \eqref{eq:linearized_momentum} gives
+\begin{equation}
+    \rho_j\,\partial_t\omega_j
+    =
+    -\nabla\times(\nabla p_j)
+    =
+    0,
+\end{equation}
+since the curl of any gradient vanishes identically.  Therefore, if the flow is irrotational at $t=0$, it remains irrotational for all time.  This is the linearized form of \textbf{Kelvin's circulation theorem}: in an inviscid, barotropic fluid with conservative body forces, the circulation around any material contour is conserved.  Since the fluids start from rest ($\omega_j=0$ at $t=0$), the perturbation flow is irrotational for all $t>0$.
+
+Because the perturbation velocity field is irrotational and the domain of each fluid is simply connected, there exists a velocity potential $\phi_j$ such that
 \begin{equation}
     \bm{u}_j = (u_j,w_j)=\nabla \phi_j,
     \qquad j=1,2.
+    \label{eq:velocity_potential_def}
 \end{equation}
-Incompressibility gives
+Substituting into the perturbation continuity equation \eqref{eq:perturbation_continuity} gives \textbf{Laplace's equation}:
 \begin{equation}
-    \nabla\cdot \bm{u}_j=0,
-\end{equation}
-and hence the potentials satisfy Laplace's equation in their respective fluid domains,
-\begin{equation}
+    \boxed{
+    \nabla^2\phi_j
+    =
     \partial_{xx}\phi_j+\partial_{zz}\phi_j=0.
+    }
     \label{eq:laplace_potential}
 \end{equation}
-The rigid walls are impermeable, so the normal velocity vanishes there:
+This is the fundamental field equation for each fluid domain.
+
+\subsection{Boundary conditions}
+
+\subsubsection{Rigid-wall impermeability}
+
+The rigid walls are impermeable, so the normal velocity vanishes there.  Since the walls are horizontal, the normal direction is $\hat{\bm{z}}$ and the condition is $w_j = \partial_z\phi_j = 0$:
 \begin{equation}
     \partial_z\phi_1(x,H_1,t)=0,
     \qquad
@@ -101,19 +234,35 @@ The rigid walls are impermeable, so the normal velocity vanishes there:
     \label{eq:potential_wall_conditions}
 \end{equation}
 
-The interface is the material surface $F(x,z,t)=z-\eta(x,t)=0$.  The kinematic condition $D_tF=0$ gives
+\subsubsection{Kinematic interface condition}
+
+The interface is defined as the material surface $F(x,z,t)=z-\eta(x,t)=0$.  Since no fluid crosses the interface, the material derivative of $F$ must vanish:
 \begin{equation}
-    \partial_t\eta + u_j\partial_x\eta = w_j
+    \frac{DF}{Dt}
+    =
+    \partial_t F + \bm{U}_j\cdot\nabla F
+    =
+    -\partial_t\eta + W_j - U_j\partial_x\eta
+    =
+    0
     \qquad \text{on } z=\eta(x,t).
 \end{equation}
-After linearizing about the flat state $\eta=0$ and neglecting products of perturbation quantities, this becomes
+This gives the \textbf{exact kinematic condition}:
 \begin{equation}
+    \partial_t\eta + U_j\partial_x\eta = W_j
+    \qquad \text{on } z=\eta(x,t).
+    \label{eq:exact_kinematic}
+\end{equation}
+Since $U_j = u_j$ (perturbation) and both $u_j$ and $\eta$ are small, the product $u_j\partial_x\eta$ is second-order and is dropped.  Furthermore, the condition is evaluated at $z=\eta$ which differs from $z=0$ by $O(\eta)$; Taylor-expanding the velocity about $z=0$ would introduce another correction of order $\eta\cdot\partial_z w_j$, which is again second-order.  Therefore the \textbf{linearized kinematic condition} is
+\begin{equation}
+    \boxed{
     \partial_t\eta(x,t)=\partial_z\phi_1(x,0,t)
     =
     \partial_z\phi_2(x,0,t).
+    }
     \label{eq:linear_kinematic_condition}
 \end{equation}
-This condition is why the interface velocity used in the notebook is simply $\partial_t\eta$.
+The equality of $\partial_z\phi_1$ and $\partial_z\phi_2$ at $z=0$ expresses continuity of normal velocity across the interface.  This condition is the reason why the interface velocity used in the notebook is simply $\partial_t\eta$.
 
 \subsection{Fourier modes and finite-depth eigenfunctions}
 
@@ -328,29 +477,116 @@ The opposite signs in the two interface potentials come from the opposite direct
 
 \subsection{Dynamic condition and surface tension}
 
-The linearized unsteady Bernoulli relation gives the perturbation pressure in each fluid.  Evaluated at the displaced interface and retaining the hydrostatic contribution from moving the interface by $\eta$, the pressure jump can be written as
+This subsection derives the dynamic (pressure) boundary condition at the interface from first principles.  The derivation has three ingredients: the unsteady Bernoulli equation, the hydrostatic pressure contribution from the displaced interface, and the Young--Laplace capillary pressure jump.
+
+\subsubsection{Unsteady Bernoulli equation}
+
+For an inviscid, irrotational fluid the velocity is $\bm{u}_j=\nabla\phi_j$, and the linearized momentum equation \eqref{eq:linearized_momentum} becomes
 \begin{equation}
-    p_1-p_2
+    \rho_j\,\nabla(\partial_t\phi_j)
     =
+    -\nabla p_j.
+\end{equation}
+Since both sides are gradients, we may integrate in space to obtain the \textbf{linearized unsteady Bernoulli equation}:
+\begin{equation}
+    p_j = -\rho_j\,\partial_t\phi_j + C_j(t),
+    \label{eq:unsteady_bernoulli}
+\end{equation}
+where $C_j(t)$ is an arbitrary function of time (the ``Bernoulli constant'').  Because $\phi_j$ is a \emph{perturbation} potential (the base-state velocity is zero), the perturbation pressure far from the interface tends to zero, and we may set $C_j(t)=0$ without loss of generality.  Thus
+\begin{equation}
+    \boxed{
+    p_j = -\rho_j\,\partial_t\phi_j.
+    }
+    \label{eq:perturbation_pressure}
+\end{equation}
+
+\subsubsection{Pressure jump across the displaced interface}
+
+The total pressure at a point on the displaced interface $z=\eta(x,t)$ is the sum of the hydrostatic base-state pressure and the perturbation pressure.  Taylor-expanding to first order about $z=0$:
+\begin{equation}
+    P_j\big|_{z=\eta}
+    \approx
+    \bar{P}_j(0) + \eta\,\frac{d\bar{P}_j}{dz}\bigg|_{z=0} + p_j(x,0,t)
+    =
+    P_0 - \rho_j g\eta + p_j(x,0,t),
+\end{equation}
+where we used $\bar{P}_j(z)=P_0-\rho_j g z$ from \eqref{eq:hydrostatic_pressure}.  The pressure jump across the interface (upper minus lower) is therefore
+\begin{equation}
+    P_1\big|_{z=\eta} - P_2\big|_{z=\eta}
+    =
+    -(\rho_1-\rho_2)g\eta
+    +
+    p_1(x,0,t) - p_2(x,0,t).
+\end{equation}
+Substituting the Bernoulli relation \eqref{eq:perturbation_pressure} gives the linearized pressure jump:
+\begin{equation}
+    P_1\big|_{z=\eta} - P_2\big|_{z=\eta}
+    =
+    -(\rho_1-\rho_2)g\eta
     -\rho_1\partial_t\phi_1(x,0,t)
-    +\rho_2\partial_t\phi_2(x,0,t)
-    -(\rho_1-\rho_2)g\eta.
+    +\rho_2\partial_t\phi_2(x,0,t).
     \label{eq:linear_pressure_jump}
 \end{equation}
-With the sign convention used in this note, the linearized capillary pressure jump is
+
+\subsubsection{Young--Laplace equation and curvature linearization}
+
+Surface tension introduces a pressure discontinuity across a curved interface.  The \textbf{Young--Laplace equation} states
 \begin{equation}
-    p_1-p_2=\sigma\partial_{xx}\eta.
+    P_1\big|_{z=\eta} - P_2\big|_{z=\eta}
+    =
+    \sigma\kappa,
+    \label{eq:young_laplace}
 \end{equation}
-Equivalently,
+where $\sigma$ is the surface tension coefficient and $\kappa$ is the mean curvature of the interface (taken positive when the center of curvature lies in the upper fluid, consistent with $\eta>0$ being a crest).  For a two-dimensional interface $z=\eta(x,t)$, the exact curvature is
 \begin{equation}
+    \kappa
+    =
+    \frac{\partial_{xx}\eta}{\left(1+(\partial_x\eta)^2\right)^{3/2}}.
+\end{equation}
+In the linear regime $|\partial_x\eta|\ll 1$, this simplifies to
+\begin{equation}
+    \kappa \approx \partial_{xx}\eta.
+    \label{eq:linearized_curvature}
+\end{equation}
+Therefore the linearized Young--Laplace condition is
+\begin{equation}
+    P_1\big|_{z=\eta} - P_2\big|_{z=\eta}
+    =
+    \sigma\,\partial_{xx}\eta.
+    \label{eq:linearized_young_laplace}
+\end{equation}
+
+\subsubsection{Assembly of the dynamic boundary condition}
+
+Equating \eqref{eq:linear_pressure_jump} and \eqref{eq:linearized_young_laplace}:
+\begin{equation}
+    -(\rho_1-\rho_2)g\eta
+    -\rho_1\partial_t\phi_1(x,0,t)
+    +\rho_2\partial_t\phi_2(x,0,t)
+    =
+    \sigma\,\partial_{xx}\eta.
+\end{equation}
+Rearranging so that the acceleration-related terms (involving $\partial_t\phi$) are on the left:
+\begin{equation}
+    \boxed{
     \rho_1\partial_t\phi_1(x,0,t)
     -\rho_2\partial_t\phi_2(x,0,t)
     +(\rho_1-\rho_2)g\eta
     =
     -\sigma\partial_{xx}\eta.
+    }
     \label{eq:linear_dynamic_condition}
 \end{equation}
-For a Fourier mode, $-\partial_{xx}\eta=k^2\eta$.  Substituting \eqref{eq:interface_potentials} into \eqref{eq:linear_dynamic_condition} gives
+This is the \textbf{linearized dynamic boundary condition} at the interface.  Each term has a clear physical interpretation:
+\begin{itemize}[leftmargin=*]
+    \item $\rho_j\partial_t\phi_j$: the unsteady inertial pressure (acceleration reaction) from fluid $j$.
+    \item $(\rho_1-\rho_2)g\eta$: the hydrostatic pressure difference due to displacing the interface by $\eta$.  When $\rho_1>\rho_2$, this term is \emph{destabilizing} because upward displacement reduces the weight supported.
+    \item $-\sigma\partial_{xx}\eta$: the capillary restoring pressure, which resists deformation and is \emph{stabilizing}.
+\end{itemize}
+
+\subsubsection{Substitution of the modal potentials}
+
+For a single Fourier mode, $\partial_{xx}\eta\to -k^2\widehat{\eta}$.  Substituting the interface potential values from \eqref{eq:interface_potentials} into \eqref{eq:linear_dynamic_condition} gives
 \begin{equation}
     -\frac{\rho_1\coth(kH_1)+\rho_2\coth(kH_2)}{k}\,
     \partial_{tt}\widehat{\eta}
@@ -360,19 +596,114 @@ For a Fourier mode, $-\partial_{xx}\eta=k^2\eta$.  Substituting \eqref{eq:interf
 \end{equation}
 Solving for $\partial_{tt}\widehat{\eta}$ yields the modal growth coefficient used throughout the note.
 
-\subsection{Stability information in the dispersion relation}
+\subsection{Stability analysis of the dispersion relation}
 
-For $k>0$ the denominator
+This subsection provides a detailed analysis of the stability properties encoded in the dispersion relation \eqref{eq:dispersion_relation}.
+
+\subsubsection{Atwood number and sign of the growth rate}
+
+The \textbf{Atwood number} is the dimensionless density contrast
+\begin{equation}
+    \mathrm{At} = \frac{\rho_1-\rho_2}{\rho_1+\rho_2}.
+    \label{eq:atwood_number}
+\end{equation}
+When $\mathrm{At}>0$ (heavy fluid on top), the gravitational term in the numerator of $\omega^2(k)$ is positive for small $k$, signaling instability.  When $\mathrm{At}<0$ (light fluid on top), all modes are stable.
+
+For $k>0$, the denominator
 \begin{equation}
     D(k)=\rho_1\coth(kH_1)+\rho_2\coth(kH_2)
+    \label{eq:denominator_D}
 \end{equation}
-is positive.  Hence stability is determined by the sign of the numerator
+is strictly positive (both $\coth$ factors are positive for positive arguments, and both densities are positive).  Hence the sign of $\omega^2(k)$ is determined entirely by the numerator:
 \begin{equation}
-    k(\rho_1-\rho_2)g-\sigma k^3.
+    N(k) = k(\rho_1-\rho_2)g - \sigma k^3 = k\bigl[(\rho_1-\rho_2)g - \sigma k^2\bigr].
+    \label{eq:numerator_N}
 \end{equation}
-The gravitational term is destabilizing when the upper fluid is heavier than the lower fluid, $\rho_1>\rho_2$.  The capillary term is stabilizing and grows like $k^3$, so sufficiently short waves oscillate rather than grow.
 
-The finite-depth factors modify the effective inertia.  In the deep-water limit $kH_1,kH_2\gg 1$, $\coth(kH_j)\to 1$ and the denominator approaches $\rho_1+\rho_2$.  In the shallow, long-wave limit $kH_j\ll 1$, $\coth(kH_j)\sim 1/(kH_j)$, so the denominator becomes large and the growth of very long waves is reduced by the rigid boundaries.
+\subsubsection{Critical wavenumber}
+
+Setting $N(k)=0$ for $k>0$ gives the \textbf{critical (marginal) wavenumber}:
+\begin{equation}
+    k_c = \sqrt{\frac{(\rho_1-\rho_2)g}{\sigma}}.
+    \label{eq:critical_wavenumber_analysis}
+\end{equation}
+The corresponding critical wavelength is $\lambda_c = 2\pi/k_c$.  It is conventional to define the \textbf{capillary length}
+\begin{equation}
+    \ell_c = \frac{1}{k_c} = \sqrt{\frac{\sigma}{(\rho_1-\rho_2)g}},
+    \label{eq:capillary_length}
+\end{equation}
+which is the length scale at which gravitational and capillary forces balance.  For $k<k_c$ (wavelengths longer than $\lambda_c$), gravity dominates and the mode is unstable.  For $k>k_c$, surface tension dominates and the mode oscillates stably.
+
+\subsubsection{Most dangerous wavenumber}
+
+The growth rate of an unstable mode is $s(k) = \sqrt{\omega^2(k)}$ for $\omega^2(k)>0$.  To find the \textbf{most dangerous (fastest-growing) wavenumber}, one maximizes $\omega^2(k)$ over $0<k<k_c$.
+
+In the \textbf{deep-water limit} ($kH_1,kH_2\gg 1$), $\coth(kH_j)\to 1$ and $D(k)\to\rho_1+\rho_2$, so
+\begin{equation}
+    \omega^2_{\infty}(k)
+    =
+    \frac{k(\rho_1-\rho_2)g - \sigma k^3}{\rho_1+\rho_2}.
+    \label{eq:omega2_deep}
+\end{equation}
+Differentiating with respect to $k$ and setting the result to zero:
+\begin{equation}
+    \frac{d\omega^2_{\infty}}{dk}
+    =
+    \frac{(\rho_1-\rho_2)g - 3\sigma k^2}{\rho_1+\rho_2}
+    =
+    0,
+\end{equation}
+which gives the deep-water most dangerous wavenumber:
+\begin{equation}
+    \boxed{
+    k_{\max}^{(\infty)} = \frac{k_c}{\sqrt{3}} = \sqrt{\frac{(\rho_1-\rho_2)g}{3\sigma}}.
+    }
+    \label{eq:k_max_deep}
+\end{equation}
+The corresponding maximum growth rate squared is
+\begin{equation}
+    \omega^2_{\max}
+    =
+    \omega^2_{\infty}(k_{\max}^{(\infty)})
+    =
+    \frac{2}{3\sqrt{3}}
+    \frac{\bigl[(\rho_1-\rho_2)g\bigr]^{3/2}}
+    {(\rho_1+\rho_2)\sqrt{\sigma}}.
+    \label{eq:omega2_max_deep}
+\end{equation}
+In terms of the Atwood number,
+\begin{equation}
+    \omega^2_{\max}
+    =
+    \frac{2\,\mathrm{At}}{3\sqrt{3}}
+    \frac{(\rho_1-\rho_2)^{1/2}g^{3/2}}
+    {\sqrt{\sigma}}.
+\end{equation}
+
+For \textbf{finite depth}, the denominator $D(k)$ depends on $k$, and the optimization requires solving a transcendental equation.  However, two qualitative facts hold:
+\begin{enumerate}[leftmargin=*]
+    \item The most dangerous wavenumber shifts to shorter wavelengths (larger $k$) in shallow domains because $D(k)$ increases for small $k$, suppressing long-wave growth.
+    \item The maximum growth rate is always less than the deep-water value \eqref{eq:omega2_max_deep}, since $D(k)\ge\rho_1+\rho_2$ for all $k>0$ (with equality in the deep-water limit).
+\end{enumerate}
+
+\subsubsection{Finite-depth effects on the denominator}
+
+The finite-depth denominator modifies the effective inertia of the two-fluid system.  The hyperbolic cotangent satisfies
+\begin{equation}
+    \coth(x) = \frac{e^x+e^{-x}}{e^x-e^{-x}}
+    =
+    1 + \frac{2}{e^{2x}-1},
+\end{equation}
+so $\coth(x)>1$ for all $x>0$, and $\coth(x)\to 1$ exponentially fast as $x\to\infty$.  This means:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Deep water} ($kH_j\gg 1$): $\coth(kH_j)\approx 1 + 2e^{-2kH_j}$, and $D(k)\approx \rho_1+\rho_2$.  Finite-depth corrections are exponentially small.
+    \item \textbf{Shallow water} ($kH_j\ll 1$): Using the Laurent expansion
+    \begin{equation}
+        \coth(x) = \frac{1}{x} + \frac{x}{3} - \frac{x^3}{45} + \cdots,
+    \end{equation}
+    we obtain $D(k)\approx \rho_1/(kH_1) + \rho_2/(kH_2)$, which diverges as $k\to 0$.  The physical interpretation is that in shallow domains, the rigid walls constrain the vertical motion and increase the effective inertia.  This suppression of long-wave growth is a purely finite-depth phenomenon absent from the classical deep-water theory.
+\end{itemize}
+
 
 \subsection{Initial-value interpretation}
 
@@ -395,6 +726,95 @@ For a real initial velocity profile, the Fourier coefficients satisfy the conjug
     \widehat{v}_{-n}=\overline{\widehat{v}_n}.
 \end{equation}
 The reconstructed interface is real for this reason; taking the real part in the implementation is a robust numerical way to remove tiny imaginary round-off residuals.
+
+\subsection{Energy analysis and variational interpretation}
+
+The dispersion relation can also be understood through an energy argument, which provides physical insight into why the instability occurs and how surface tension stabilizes short waves.
+
+\subsubsection{Perturbation kinetic energy}
+
+The kinetic energy of the perturbation flow in both fluids is
+\begin{equation}
+    T
+    =
+    \frac{1}{2}\sum_{j=1}^{2}\rho_j\int |\nabla\phi_j|^2\,dV,
+    \label{eq:kinetic_energy}
+\end{equation}
+where the integration is over the respective fluid domain.  For a single Fourier mode with wavenumber $k>0$ in a periodic domain of length $L$, one can show using the normalized potentials \eqref{eq:upper_normalized_potential}--\eqref{eq:lower_normalized_potential} that the kinetic energy per unit length (averaged over one wavelength) is
+\begin{equation}
+    \langle T \rangle
+    =
+    \frac{L}{2}
+    \frac{\rho_1\coth(kH_1)+\rho_2\coth(kH_2)}{k}\,
+    |\partial_t\widehat{\eta}|^2
+    =
+    \frac{L}{2}\frac{D(k)}{k}\,|\partial_t\widehat{\eta}|^2.
+    \label{eq:modal_kinetic_energy}
+\end{equation}
+The factor $D(k)/k$ is the \textbf{effective added mass} per unit wavenumber.  It represents the total inertia that the moving interface must accelerate against.
+
+\subsubsection{Potential energy}
+
+The perturbation potential energy has two contributions:
+
+\medskip\noindent
+\textbf{Gravitational potential energy.}  Displacing the interface by $\eta(x,t)$ moves fluid parcels vertically, changing the gravitational PE.  To first order in $\eta$, a column of width $dx$ at position $x$ has its heavier fluid displaced downward and lighter fluid displaced upward.  The PE change per unit horizontal length, averaged over one wavelength, is
+\begin{equation}
+    \langle V_g \rangle
+    =
+    \frac{1}{2}(\rho_1-\rho_2)g \int_0^L \eta^2\,dx
+    =
+    \frac{L}{2}(\rho_1-\rho_2)g\,|\widehat{\eta}|^2.
+    \label{eq:gravitational_pe}
+\end{equation}
+When $\rho_1>\rho_2$, this is a \emph{positive} contribution: the base state is a local energy maximum, and the system can release energy by amplifying the perturbation.  This is the energetic origin of the instability.
+
+\medskip\noindent
+\textbf{Surface (capillary) energy.}  Deforming the interface increases its arc length.  The surface energy per unit length in the $y$-direction is
+\begin{equation}
+    V_s
+    =
+    \sigma\int_0^L
+    \left(\sqrt{1+(\partial_x\eta)^2}-1\right)dx
+    \approx
+    \frac{\sigma}{2}\int_0^L (\partial_x\eta)^2\,dx,
+\end{equation}
+where the second expression is the linearized form.  For a Fourier mode, $\partial_x\eta \to ik\widehat{\eta}e^{ikx}$, so
+\begin{equation}
+    \langle V_s \rangle
+    =
+    \frac{L}{2}\sigma k^2\,|\widehat{\eta}|^2.
+    \label{eq:surface_energy}
+\end{equation}
+This is always positive and grows with $k^2$, penalizing short-wave deformations.
+
+\subsubsection{Total energy and Rayleigh quotient}
+
+The total perturbation energy is
+\begin{equation}
+    E = \langle T \rangle - \langle V_g \rangle + \langle V_s \rangle.
+    \label{eq:total_energy}
+\end{equation}
+Note the \emph{minus} sign on $V_g$: in the linear stability context, the gravitational PE of the base state is a maximum, so releasing PE corresponds to decreasing $V_g$.  For the linearized inviscid system, energy is conserved: $dE/dt=0$.
+
+For the modal ODE $\partial_{tt}\widehat{\eta}=\omega^2(k)\widehat{\eta}$, conservation of energy gives a direct expression for $\omega^2(k)$ as a \textbf{Rayleigh quotient}:
+\begin{equation}
+    \boxed{
+    \omega^2(k)
+    =
+    \frac{(\rho_1-\rho_2)gk - \sigma k^3}{D(k)}
+    =
+    \frac{\text{gravitational PE release rate} - \text{capillary PE cost}}{\text{effective inertia}}.
+    }
+    \label{eq:rayleigh_quotient}
+\end{equation}
+This variational form makes the physics transparent:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Instability} ($\omega^2>0$) occurs when the gravitational PE that can be released by exchanging heavy and light fluid exceeds the capillary energy cost of deforming the interface.
+    \item \textbf{Stability} ($\omega^2<0$) occurs when surface tension prevents the system from accessing the available gravitational PE.
+    \item \textbf{Marginal stability} ($\omega^2=0$) at $k=k_c$ is the point where gravitational and capillary energies exactly balance.
+    \item The \textbf{finite-depth effect} enters only through the denominator (inertia).  Finite depth never changes the stability boundary $k_c$, but it always reduces the growth rate by increasing the effective inertia.
+\end{itemize}
 
 \subsection{Discrete projection and verification}
 
@@ -428,6 +848,99 @@ When $\rho_1>\rho_2$, the critical wavenumber at which the numerator changes sig
     \label{eq:critical_wavenumber}
 \end{equation}
 For $0<k<k_c$, the numerator of \eqref{eq:dispersion_relation} is positive, and the corresponding modes are Rayleigh--Taylor unstable.  For $k>k_c$, surface tension stabilizes the mode in the linear theory.
+
+\section{Asymptotic limits of the dispersion relation}
+
+The finite-depth dispersion relation \eqref{eq:dispersion_relation} reduces to several well-known results in appropriate limits.  These limiting cases serve both as checks on the formula and as a guide to the physics.
+
+\subsection{Deep-water limit ($kH_1,kH_2\to\infty$)}
+
+When both fluid layers are much deeper than the perturbation wavelength, $kH_j\gg 1$ for $j=1,2$.  The hyperbolic cotangent satisfies
+\begin{equation}
+    \coth(x) = 1 + \frac{2}{e^{2x}-1},
+\end{equation}
+so for $x\gg 1$:
+\begin{equation}
+    \coth(x) = 1 + 2e^{-2x} + O(e^{-4x}).
+    \label{eq:coth_deep_expansion}
+\end{equation}
+Substituting into the denominator:
+\begin{equation}
+    D(k) = \rho_1 + \rho_2 + 2\rho_1 e^{-2kH_1} + 2\rho_2 e^{-2kH_2} + \cdots
+\end{equation}
+To leading order, $D(k)\to\rho_1+\rho_2$, and the dispersion relation becomes the \textbf{classical deep-water Rayleigh--Taylor formula}:
+\begin{equation}
+    \boxed{
+    \omega^2(k) \xrightarrow{kH_j\to\infty}
+    \frac{k(\rho_1-\rho_2)g - \sigma k^3}{\rho_1+\rho_2}
+    =
+    k\,\mathrm{At}\cdot g - \frac{\sigma k^3}{\rho_1+\rho_2}.
+    }
+    \label{eq:deep_water_dispersion}
+\end{equation}
+The error incurred by using the deep-water formula when the depths are finite is bounded by
+\begin{equation}
+    \left|\omega^2(k) - \omega^2_{\infty}(k)\right|
+    \le
+    C\,|N(k)|\,\bigl(\rho_1 e^{-2kH_1} + \rho_2 e^{-2kH_2}\bigr),
+    \label{eq:deep_water_error}
+\end{equation}
+where $C$ is a constant of order unity.  The finite-depth correction is thus \emph{exponentially small} in $kH_j$.  In practice, $kH_j\gtrsim 3$ (i.e., layer depth exceeding one wavelength) is sufficient for the deep-water approximation to be accurate to better than $0.5\%$.
+
+\subsection{Shallow-water limit ($kH_j\to 0$)}
+
+When the perturbation wavelength is much longer than the fluid depth, $kH_j\ll 1$.  The Laurent expansion of $\coth$ gives
+\begin{equation}
+    \coth(x) = \frac{1}{x} + \frac{x}{3} - \frac{x^3}{45} + O(x^5).
+    \label{eq:coth_shallow_expansion}
+\end{equation}
+Substituting with $x=kH_j$:
+\begin{equation}
+    D(k) = \frac{\rho_1}{kH_1} + \frac{\rho_2}{kH_2}
+    + \frac{k}{3}\bigl(\rho_1 H_1 + \rho_2 H_2\bigr) + O(k^3).
+\end{equation}
+The dominant term diverges as $k\to 0$, so the dispersion relation becomes
+\begin{equation}
+    \omega^2(k) \xrightarrow{kH_j\to 0}
+    \frac{k(\rho_1-\rho_2)g - \sigma k^3}{\rho_1/(kH_1)+\rho_2/(kH_2)}
+    =
+    \frac{k^2 H_1 H_2\bigl[(\rho_1-\rho_2)g - \sigma k^2\bigr]}{\rho_1 H_2 + \rho_2 H_1}.
+    \label{eq:shallow_water_dispersion}
+\end{equation}
+The growth rate squared is now proportional to $k^2$ rather than $k$ at small $k$, meaning that \textbf{long waves grow much more slowly in shallow domains}.  Physically, the rigid walls suppress the vertical fluid motion that would otherwise accompany long-wave interface perturbations.  The fluid must ``squeeze'' horizontally through the thin gap, which requires a larger pressure gradient and hence a larger effective inertia.
+
+Note that the critical wavenumber $k_c$ is \emph{unchanged} by finite depth --- it depends only on the numerator.  Finite depth modifies only the growth \emph{rate}, not the stability \emph{boundary}.
+
+\subsection{Equal-depth case ($H_1=H_2=H$)}
+
+When both layers have the same depth $H$, the denominator simplifies to
+\begin{equation}
+    D(k) = (\rho_1+\rho_2)\coth(kH),
+\end{equation}
+and the dispersion relation becomes
+\begin{equation}
+    \omega^2(k) = \frac{k(\rho_1-\rho_2)g - \sigma k^3}{(\rho_1+\rho_2)\coth(kH)}
+    =
+    \frac{k\,\mathrm{At}\cdot g - \frac{\sigma k^3}{\rho_1+\rho_2}}{\coth(kH)}.
+    \label{eq:equal_depth_dispersion}
+\end{equation}
+This is the deep-water formula \eqref{eq:deep_water_dispersion} divided by $\coth(kH)$, or equivalently multiplied by $\tanh(kH)$.  Since $0<\tanh(kH)<1$, finite depth always reduces the growth rate relative to the deep-water value.
+
+\subsection{Single-fluid limit ($\rho_2\to 0$)}
+
+If the lower fluid has negligible density (e.g., a liquid layer above a vacuum or very light gas), then $\rho_2\to 0$ and
+\begin{equation}
+    \omega^2(k) \to
+    \frac{k\rho_1 g - \sigma k^3}{\rho_1\coth(kH_1)}
+    =
+    \left(kg - \frac{\sigma k^3}{\rho_1}\right)\tanh(kH_1).
+    \label{eq:single_fluid_dispersion}
+\end{equation}
+When $\sigma=0$, this becomes $\omega^2 = kg\tanh(kH_1)$, which is the dispersion relation for \textbf{linear gravity waves on a free surface of finite depth} --- a classical result in surface wave theory.  Here $\omega^2>0$ because we have defined gravity pointing downward and the heavy fluid is on top; in the standard gravity-wave convention with light fluid on top, one would have $\omega^2<0$ (oscillatory modes).
+
+\subsection{Inviscid limit from the viscous theory}
+
+The shared derivation in the next section uses viscous fluids with kinematic viscosities $\nu_j$.  In the inviscid limit $\nu_j\to 0$, the viscous wavenumbers satisfy $q_j\to\infty$ (from \eqref{eq:shared_q_definition}), and the vorticity-diffusion roots decouple from the interfacial dynamics.  The remaining potential-flow roots reproduce the deep-water formula \eqref{eq:deep_water_dispersion}, confirming consistency between the two approaches.
 
 \section{Adapted normal-mode result from the shared derivation}
 
@@ -815,6 +1328,79 @@ where $N=4096$.  The Fourier coefficient is approximated by the periodic trapezo
 \end{equation}
 This avoids the convergence warnings caused by numerical quadrature when the exact coefficient is zero.  The Mathematica implementation also applies \texttt{Chop} to remove round-off residuals.
 
+\section{Well-posedness, convergence, and error analysis}
+
+This section addresses the mathematical foundations of the initial-value problem and the numerical method: existence and uniqueness of solutions, convergence of the Fourier truncation, and the validity limits of the linear theory.
+
+\subsection{Well-posedness of the modal ODE}
+
+For each Fourier mode $n$, the modal equation \eqref{eq:modal_ode} is a second-order linear ODE with constant coefficient $\lambda_n$:
+\begin{equation}
+    \frac{d^2\widehat{\eta}_n}{dt^2} = \lambda_n\,\widehat{\eta}_n,
+    \qquad
+    \widehat{\eta}_n(0) = 0,
+    \quad
+    \dot{\widehat{\eta}}_n(0) = \widehat{v}_n.
+\end{equation}
+By the Picard--Lindel\"of theorem (or equivalently, by the theory of linear ODEs with constant coefficients), this initial-value problem has a unique global solution for all $t\in\mathbb{R}$:
+\begin{equation}
+    \widehat{\eta}_n(t) = \widehat{v}_n\,G(\lambda_n,t),
+\end{equation}
+where $G(\lambda,t)$ is the growth kernel defined in \eqref{eq:growth_kernel}.  The solution depends continuously on the initial data $\widehat{v}_n$ and the parameter $\lambda_n$:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Continuous dependence on initial data:}  $|\widehat{\eta}_n(t)| = |\widehat{v}_n|\,|G(\lambda_n,t)|$, so the amplitude is bounded linearly by the initial velocity coefficient at any fixed time.
+    \item \textbf{Continuous dependence on $\lambda_n$:}  The mapping $\lambda\mapsto G(\lambda,t)$ is an entire function of $\lambda$ (analytic everywhere in $\mathbb{C}$), so small perturbations in the dispersion relation lead to small changes in the solution.
+\end{itemize}
+
+\subsection{Spectral convergence of the Fourier truncation}
+
+The full solution is the infinite Fourier series \eqref{eq:eta_reconstruction}.  In practice, the notebook retains modes $|n|\le n_{\max}$ (with $n_{\max}=32$ in the implementation).  The truncation error is
+\begin{equation}
+    \eta(x,t) - \eta_{n_{\max}}(x,t)
+    =
+    \operatorname{Re}
+    \sum_{|n|>n_{\max}}
+    \widehat{v}_n\,G(\lambda_n,t)\,e^{ik_n x}.
+\end{equation}
+The rate at which this error decays as $n_{\max}\to\infty$ depends on the smoothness of the initial velocity $v_0(x)$:
+
+\begin{itemize}[leftmargin=*]
+    \item If $v_0\in C^p$ (periodic with $p$ continuous derivatives), then $|\widehat{v}_n|=O(|n|^{-p})$, and the truncation error at fixed $t$ decays algebraically: $O(n_{\max}^{-p})$.
+    \item If $v_0$ is \textbf{analytic} and periodic (as in the notebook example \eqref{eq:v0_example}, which is a trigonometric polynomial), then $|\widehat{v}_n|$ decays exponentially: there exists $\alpha>0$ such that $|\widehat{v}_n|=O(e^{-\alpha|n|})$.  The truncation error then decays \textbf{spectrally} (faster than any polynomial).
+    \item For a \textbf{trigonometric polynomial} with highest harmonic $n_0$ (as in the example, where $n_0=5$), the Fourier coefficients are exactly zero for $|n|>n_0$.  Any truncation with $n_{\max}\ge n_0$ gives the \emph{exact} solution.
+\end{itemize}
+
+\textbf{Remark.}  For unstable modes, $|G(\lambda_n,t)|\sim e^{s_n t}/(2s_n)$ where $s_n=\sqrt{\lambda_n}$.  The growth rate $s_n$ is bounded (it decreases for $k>k_{\max}$ and becomes imaginary for $k>k_c$), so the Fourier truncation error remains controlled at any finite time.  However, for very long times, even a small truncation error in an unstable mode coefficient can grow exponentially.
+
+\subsection{Exactness of the discrete trapezoidal rule}
+
+The Fourier coefficients are computed using the periodic trapezoidal rule \eqref{eq:discrete_fourier_projection} on $N$ equally spaced points.  A classical result in numerical analysis states:
+
+\medskip
+\noindent\textbf{Theorem (Exactness of the periodic trapezoidal rule).}  \textit{If $f(x)$ is a trigonometric polynomial of degree at most $N/2-1$, i.e.,}
+\begin{equation}
+    f(x) = \sum_{|n|\le N/2-1} c_n\,e^{2\pi i n x/L},
+\end{equation}
+\textit{then the periodic trapezoidal rule with $N$ equally spaced nodes computes each Fourier coefficient $c_n$ exactly (up to floating-point round-off).}
+
+\medskip
+In the notebook, $N=4096$ and the initial velocity \eqref{eq:v0_example} has highest harmonic $n_0=5\ll N/2=2048$.  Therefore the discrete Fourier coefficients agree with the exact ones to machine precision, and the only errors in the computation are floating-point round-off (approximately $10^{-16}$ in double precision, or better in Mathematica's arbitrary-precision arithmetic).
+
+\subsection{Limits of the linear approximation}
+
+The linearized theory is valid when the perturbation amplitude is small compared to the wavelength.  More precisely, the neglected nonlinear terms in the kinematic and dynamic conditions are of order $O(|\eta|^2 k^2)$ relative to the retained linear terms.  The linear theory therefore breaks down when
+\begin{equation}
+    |k\eta| = O(1),
+    \qquad
+    \text{i.e.,}\quad |\eta| \sim \frac{\lambda}{2\pi},
+    \label{eq:nonlinear_threshold}
+\end{equation}
+where $\lambda=2\pi/k$ is the perturbation wavelength.  For the initial-value problem with initial velocity amplitude $U_0$, the displacement of the fastest-growing mode reaches order $\lambda/(2\pi)$ at time
+\begin{equation}
+    t_{\mathrm{nl}} \sim \frac{1}{s_{\max}}\ln\!\left(\frac{s_{\max}}{k_{\max}U_0}\right),
+\end{equation}
+where $s_{\max}=\sqrt{\omega^2_{\max}}$ is the maximum growth rate.  Beyond $t_{\mathrm{nl}}$, nonlinear effects (bubble-spike asymmetry, mode coupling, secondary instabilities) become important and the linear theory is no longer quantitatively reliable.  However, the linear theory correctly predicts which modes grow and their initial growth rates, providing essential input for nonlinear simulations.
+
 \section{Verification conditions}
 
 The notebook verifies the initial conditions by computing
@@ -964,5 +1550,90 @@ maxLowerWallError =
   maxLowerWallError
 }
 \end{lstlisting}
+
+\section{Table of notation}
+
+Table~\ref{tab:notation} collects the principal symbols used throughout this note.
+
+\begin{table}[ht]
+\centering
+\caption{Principal notation.}
+\label{tab:notation}
+\small
+\begin{tabular}{lll}
+\hline
+\textbf{Symbol} & \textbf{Meaning} & \textbf{Defined in} \\
+\hline
+$\rho_1,\rho_2$ & Densities of upper and lower fluids & \S\ref{eq:euler_momentum} \\
+$g$ & Gravitational acceleration & \S\ref{eq:euler_z_momentum} \\
+$\sigma$ & Surface tension coefficient & \S\ref{eq:young_laplace} \\
+$H_1,H_2$ & Depths of upper and lower fluid layers & \S1 \\
+$L$ & Horizontal period of the domain & \S6 \\
+$\eta(x,t)$ & Interface displacement & \S1 \\
+$\phi_j(x,z,t)$ & Velocity potential in fluid $j$ & Eq.~\eqref{eq:velocity_potential_def} \\
+$\bm{u}_j=(u_j,w_j)$ & Perturbation velocity in fluid $j$ & Eq.~\eqref{eq:velocity_potential_def} \\
+$\bar{P}_j(z)$ & Hydrostatic base-state pressure & Eq.~\eqref{eq:hydrostatic_pressure} \\
+$p_j$ & Perturbation pressure & Eq.~\eqref{eq:perturbation_pressure} \\
+$k_n=2\pi n/L$ & Discrete wavenumber of mode $n$ & \S6 \\
+$k=|k_n|$ & Wavenumber magnitude & \S3 \\
+$\kappa$ & Interface curvature & Eq.~\eqref{eq:linearized_curvature} \\
+$\widehat{\eta}_n(t)$ & Fourier amplitude of interface mode $n$ & Eq.~\eqref{eq:eta_hat_solution} \\
+$\widehat{v}_n$ & Fourier coefficient of initial velocity & Eq.~\eqref{eq:fourier_coefficients} \\
+$\omega^2(k)$ & Dispersion relation & Eq.~\eqref{eq:dispersion_relation} \\
+$\lambda_n=\omega^2(|k_n|)$ & Modal eigenvalue for mode $n$ & Eq.~\eqref{eq:modal_ode} \\
+$G(\lambda,t)$ & Growth kernel (Green's function) & Eq.~\eqref{eq:growth_kernel} \\
+$D(k)$ & Finite-depth denominator & Eq.~\eqref{eq:denominator_D} \\
+$k_c$ & Critical (marginal) wavenumber & Eq.~\eqref{eq:critical_wavenumber_analysis} \\
+$\ell_c=1/k_c$ & Capillary length & Eq.~\eqref{eq:capillary_length} \\
+$\mathrm{At}$ & Atwood number & Eq.~\eqref{eq:atwood_number} \\
+$k_{\max}^{(\infty)}$ & Most dangerous wavenumber (deep water) & Eq.~\eqref{eq:k_max_deep} \\
+$s=\sqrt{\omega^2}$ & Temporal growth rate & \S3 \\
+$\nu_j=\mu_j/\rho_j$ & Kinematic viscosity (shared derivation) & Eq.~\eqref{eq:shared_linear_ns} \\
+$q_j$ & Viscous wavenumber (shared derivation) & Eq.~\eqref{eq:shared_q_definition} \\
+$N$ & Number of discrete Fourier sample points & \S8 \\
+$n_{\max}$ & Maximum retained Fourier mode index & \S6 \\
+$U_0$ & Initial velocity amplitude & Eq.~\eqref{eq:v0_example} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{thebibliography}{10}
+
+\bibitem{rayleigh1883}
+Lord Rayleigh,
+``Investigation of the character of the equilibrium of an incompressible heavy fluid of variable density,''
+\textit{Proceedings of the London Mathematical Society},
+\textbf{s1-14}(1), 170--177 (1883).
+
+\bibitem{taylor1950}
+G.~I.~Taylor,
+``The instability of liquid surfaces when accelerated in a direction perpendicular to their planes.~I,''
+\textit{Proceedings of the Royal Society of London.\ Series~A},
+\textbf{201}(1065), 192--196 (1950).
+
+\bibitem{chandrasekhar1961}
+S.~Chandrasekhar,
+\textit{Hydrodynamic and Hydromagnetic Stability},
+Clarendon Press, Oxford (1961).
+Reprinted by Dover Publications, New York (1981).
+
+\bibitem{drazin_reid2004}
+P.~G.~Drazin and W.~H.~Reid,
+\textit{Hydrodynamic Stability},
+2nd ed., Cambridge University Press (2004).
+
+\bibitem{sharp1984}
+D.~H.~Sharp,
+``An overview of Rayleigh--Taylor instability,''
+\textit{Physica D: Nonlinear Phenomena},
+\textbf{12}(1--3), 3--18 (1984).
+
+\bibitem{kull1991}
+H.~J.~Kull,
+``Theory of the Rayleigh--Taylor instability,''
+\textit{Physics Reports},
+\textbf{206}(5), 197--325 (1991).
+
+\end{thebibliography}
 
 \end{document}
