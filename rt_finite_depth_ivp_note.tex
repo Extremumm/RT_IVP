@@ -117,44 +117,214 @@ This condition is why the interface velocity used in the notebook is simply $\pa
 
 \subsection{Fourier modes and finite-depth eigenfunctions}
 
-Because the coefficients and boundaries are independent of $x$, a Fourier mode evolves independently in the linear theory.  For a nonzero mode
+Because the governing equations, material parameters, and wall locations are independent of $x$, the linear problem is diagonal in Fourier space.  In a periodic domain one may write
 \begin{equation}
-    \phi_j(x,z,t)=\widehat{\phi}_{j}(z,t)e^{ikx},
-    \qquad k>0,
+    \eta(x,t)
+    =
+    \sum_{\kappa\neq 0}
+    \widehat{\eta}_{\kappa}(t)e^{i\kappa x},
+    \qquad
+    \phi_j(x,z,t)
+    =
+    \sum_{\kappa\neq 0}
+    \widehat{\phi}_{j,\kappa}(z,t)e^{i\kappa x}.
+    \label{eq:background_fourier_expansion}
 \end{equation}
-Laplace's equation \eqref{eq:laplace_potential} reduces to
+Here $\kappa$ is a signed horizontal wavenumber.  The vertical structure depends only on its magnitude
 \begin{equation}
-    \frac{d^2\widehat{\phi}_j}{dz^2}-k^2\widehat{\phi}_j=0.
+    k=|\kappa|>0,
 \end{equation}
-The finite-depth wall conditions \eqref{eq:potential_wall_conditions} select hyperbolic functions.  Writing the modal interfacial velocity as
+because the horizontal second derivative gives
+\begin{equation}
+    \partial_{xx}
+    \left[
+    \widehat{\phi}_{j,\kappa}(z,t)e^{i\kappa x}
+    \right]
+    =
+    -\kappa^2
+    \widehat{\phi}_{j,\kappa}(z,t)e^{i\kappa x}
+    =
+    -k^2
+    \widehat{\phi}_{j,\kappa}(z,t)e^{i\kappa x}.
+\end{equation}
+Substitution into Laplace's equation \eqref{eq:laplace_potential} therefore gives the same ordinary differential equation in both fluids:
+\begin{equation}
+    \frac{d^2\widehat{\phi}_{j,\kappa}}{dz^2}
+    -
+    k^2\widehat{\phi}_{j,\kappa}
+    =
+    0.
+    \label{eq:vertical_potential_ode}
+\end{equation}
+The two independent solutions are $\cosh(kz)$ and $\sinh(kz)$, or equivalently shifted versions of these functions.  The shifted form is convenient because each wall condition can be imposed at the point where the shifted coordinate is zero.
+
+For the upper fluid, introduce the distance from the upper wall,
+\begin{equation}
+    y_1=H_1-z.
+\end{equation}
+The most general modal potential may be written
+\begin{equation}
+    \widehat{\phi}_{1,\kappa}(z,t)
+    =
+    A_1(t)\cosh(k(H_1-z))
+    +
+    B_1(t)\sinh(k(H_1-z)).
+    \label{eq:upper_general_potential}
+\end{equation}
+Differentiating with respect to $z$ gives the upper vertical velocity amplitude
+\begin{equation}
+    \widehat{w}_{1,\kappa}(z,t)
+    =
+    \partial_z\widehat{\phi}_{1,\kappa}(z,t)
+    =
+    -kA_1(t)\sinh(k(H_1-z))
+    -
+    kB_1(t)\cosh(k(H_1-z)).
+\end{equation}
+The rigid-wall condition at $z=H_1$ requires
+\begin{equation}
+    \widehat{w}_{1,\kappa}(H_1,t)
+    =
+    -kB_1(t)
+    =
+    0,
+\end{equation}
+so $B_1(t)=0$.  Thus the upper potential has the reduced form
+\begin{equation}
+    \widehat{\phi}_{1,\kappa}(z,t)
+    =
+    A_1(t)\cosh(k(H_1-z)).
+\end{equation}
+
+For the lower fluid, introduce the distance from the lower wall,
+\begin{equation}
+    y_2=z+H_2.
+\end{equation}
+The most general modal potential compatible with the vertical ODE is
+\begin{equation}
+    \widehat{\phi}_{2,\kappa}(z,t)
+    =
+    A_2(t)\cosh(k(z+H_2))
+    +
+    B_2(t)\sinh(k(z+H_2)).
+    \label{eq:lower_general_potential}
+\end{equation}
+Its vertical derivative is
+\begin{equation}
+    \widehat{w}_{2,\kappa}(z,t)
+    =
+    \partial_z\widehat{\phi}_{2,\kappa}(z,t)
+    =
+    kA_2(t)\sinh(k(z+H_2))
+    +
+    kB_2(t)\cosh(k(z+H_2)).
+\end{equation}
+The wall condition at $z=-H_2$ gives
+\begin{equation}
+    \widehat{w}_{2,\kappa}(-H_2,t)
+    =
+    kB_2(t)
+    =
+    0,
+\end{equation}
+so $B_2(t)=0$, and therefore
+\begin{equation}
+    \widehat{\phi}_{2,\kappa}(z,t)
+    =
+    A_2(t)\cosh(k(z+H_2)).
+\end{equation}
+
+It remains to normalize the two constants $A_1(t)$ and $A_2(t)$ by the interfacial kinematic condition.  Define the modal interface velocity by
 \begin{equation}
     \widehat{W}(t)=\partial_t\widehat{\eta}(t),
+    \label{eq:modal_interface_velocity}
 \end{equation}
-the vertical velocities are
-\begin{align}
-    \widehat{w}_1(z,t)
-    &=
+where the subscript $\kappa$ has been suppressed for readability.  The linear kinematic condition \eqref{eq:linear_kinematic_condition} requires the vertical velocity on both sides of the interface to equal $\widehat{W}(t)$:
+\begin{equation}
+    \widehat{w}_{1,\kappa}(0,t)
+    =
+    \widehat{w}_{2,\kappa}(0,t)
+    =
+    \widehat{W}(t).
+\end{equation}
+For the upper fluid this gives
+\begin{equation}
+    -kA_1(t)\sinh(kH_1)
+    =
+    \widehat{W}(t),
+    \qquad
+    A_1(t)
+    =
+    -\frac{\widehat{W}(t)}{k\sinh(kH_1)}.
+\end{equation}
+Hence
+\begin{equation}
+    \widehat{\phi}_{1,\kappa}(z,t)
+    =
+    -\frac{\widehat{W}(t)}{k\sinh(kH_1)}
+    \cosh(k(H_1-z)),
+    \label{eq:upper_normalized_potential}
+\end{equation}
+and differentiating once more gives
+\begin{equation}
+    \widehat{w}_{1,\kappa}(z,t)
+    =
     \widehat{W}(t)
-    \frac{\sinh(k(H_1-z))}{\sinh(kH_1)},
-    \label{eq:background_upper_shape}\\
-    \widehat{w}_2(z,t)
-    &=
+    \frac{\sinh(k(H_1-z))}{\sinh(kH_1)}.
+    \label{eq:background_upper_shape}
+\end{equation}
+For the lower fluid,
+\begin{equation}
+    kA_2(t)\sinh(kH_2)
+    =
+    \widehat{W}(t),
+    \qquad
+    A_2(t)
+    =
+    \frac{\widehat{W}(t)}{k\sinh(kH_2)}.
+\end{equation}
+Thus
+\begin{equation}
+    \widehat{\phi}_{2,\kappa}(z,t)
+    =
+    \frac{\widehat{W}(t)}{k\sinh(kH_2)}
+    \cosh(k(z+H_2)),
+    \label{eq:lower_normalized_potential}
+\end{equation}
+and
+\begin{equation}
+    \widehat{w}_{2,\kappa}(z,t)
+    =
     \widehat{W}(t)
     \frac{\sinh(k(z+H_2))}{\sinh(kH_2)}.
     \label{eq:background_lower_shape}
-\end{align}
-These shapes equal $\widehat{W}$ at the interface and vanish at the rigid walls.  Integrating once in $z$ gives the interface values of the velocity potentials,
+\end{equation}
+Equations \eqref{eq:background_upper_shape} and \eqref{eq:background_lower_shape} are the finite-depth eigenfunctions used in the notebook.  They have three important built-in properties:
 \begin{equation}
-    \widehat{\phi}_1(0,t)
+    \widehat{w}_{1,\kappa}(H_1,t)=0,
+    \qquad
+    \widehat{w}_{2,\kappa}(-H_2,t)=0,
+    \qquad
+    \widehat{w}_{1,\kappa}(0,t)=\widehat{w}_{2,\kappa}(0,t)=\widehat{W}(t).
+\end{equation}
+The same normalized potentials also give the interface values needed in the dynamic condition:
+\begin{align}
+    \widehat{\phi}_{1,\kappa}(0,t)
+    &=
+    -\frac{\widehat{W}(t)}{k}
+    \frac{\cosh(kH_1)}{\sinh(kH_1)}
     =
     -\frac{\coth(kH_1)}{k}\,\partial_t\widehat{\eta}(t),
-    \qquad
-    \widehat{\phi}_2(0,t)
+    \notag\\
+    \widehat{\phi}_{2,\kappa}(0,t)
+    &=
+    \frac{\widehat{W}(t)}{k}
+    \frac{\cosh(kH_2)}{\sinh(kH_2)}
     =
     \frac{\coth(kH_2)}{k}\,\partial_t\widehat{\eta}(t).
     \label{eq:interface_potentials}
-\end{equation}
-The factors $\rho_1\coth(kH_1)$ and $\rho_2\coth(kH_2)$ that appear in the dispersion relation come from these interface potential values.  They represent the finite-depth inertial loading of the two fluids on the moving interface.
+\end{align}
+The opposite signs in the two interface potentials come from the opposite directions from the interface to the two walls: in the upper fluid increasing $z$ points toward the wall, while in the lower fluid increasing $z$ points away from the lower wall.  The factors $\rho_1\coth(kH_1)$ and $\rho_2\coth(kH_2)$ that appear in the dispersion relation come from these interface potential values.  They represent the finite-depth inertial loading of the two fluids on the moving interface.
 
 \subsection{Dynamic condition and surface tension}
 
