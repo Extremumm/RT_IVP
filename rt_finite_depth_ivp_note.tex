@@ -1,0 +1,457 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{physics}
+\usepackage{siunitx}
+\usepackage{mathtools}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{caption}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!60!black,
+    citecolor=blue!60!black,
+    urlcolor=blue!60!black
+}
+
+\lstdefinestyle{MathematicaStyle}{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    columns=fullflexible,
+    frame=single,
+    rulecolor=\color{black!30},
+    backgroundcolor=\color{black!3},
+    keywordstyle=\color{blue!60!black},
+    commentstyle=\color{green!40!black},
+    stringstyle=\color{red!50!black},
+    showstringspaces=false
+}
+
+\title{Linear Initial-Value Problem for the Finite-Depth Rayleigh--Taylor Instability}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This note summarizes the linear initial-value formulation implemented in the latest Mathematica notebook.  Two inviscid, incompressible, irrotational fluids are separated by a nominally flat interface at $z=0$ and are bounded by rigid horizontal walls at $z=H_1$ and $z=-H_2$.  The initial interface is flat, but an interfacial vertical perturbation velocity $v_0(x)$ is imposed at $t=0$.  The resulting dynamics are solved mode by mode using the finite-depth Rayleigh--Taylor dispersion relation with surface tension.
+\end{abstract}
+
+\section{Geometry and assumptions}
+
+The upper fluid occupies
+\begin{equation}
+    0 < z < H_1,
+\end{equation}
+while the lower fluid occupies
+\begin{equation}
+    -H_2 < z < 0.
+\end{equation}
+The unperturbed interface is located at $z=0$.  The densities are denoted by $\rho_1$ for the upper fluid and $\rho_2$ for the lower fluid.  The gravitational acceleration is $g$, and the surface tension coefficient is $\sigma$.
+
+The interface displacement is denoted by
+\begin{equation}
+    z = \eta(x,t),
+\end{equation}
+where $\eta$ is assumed sufficiently small for linearization.  The rigid-wall impermeability conditions are
+\begin{equation}
+    w_1(x,H_1,t)=0, \qquad w_2(x,-H_2,t)=0,
+\end{equation}
+where $w_1$ and $w_2$ are the vertical velocities in the upper and lower fluids, respectively.
+
+The initial-value problem considered in the notebook is
+\begin{equation}
+    \eta(x,0)=0,
+    \qquad
+    \partial_t \eta(x,0)=v_0(x).
+    \label{eq:initial_conditions}
+\end{equation}
+Thus, the interface is initially flat, and the perturbation is introduced through the initial vertical velocity at the interface.
+
+\section{Finite-depth dispersion relation}
+
+For a Fourier mode with horizontal wavenumber $k>0$, the corrected finite-depth dispersion relation used in the notebook is
+\begin{equation}
+    \boxed{
+    \omega^2(k)
+    =
+    \frac{k(\rho_1-\rho_2)g-\sigma k^3}
+    {\rho_1\coth(kH_1)+\rho_2\coth(kH_2)}
+    }.
+    \label{eq:dispersion_relation}
+\end{equation}
+The sign of the capillary term is stabilizing: for sufficiently large $k$, the term $-\sigma k^3$ can make $\omega^2(k)$ negative, producing stable oscillatory modes rather than exponential growth.
+
+When $\rho_1>\rho_2$, the critical wavenumber at which the numerator changes sign is
+\begin{equation}
+    k_c = \sqrt{\frac{(\rho_1-\rho_2)g}{\sigma}}.
+    \label{eq:critical_wavenumber}
+\end{equation}
+For $0<k<k_c$, the numerator of \eqref{eq:dispersion_relation} is positive, and the corresponding modes are Rayleigh--Taylor unstable.  For $k>k_c$, surface tension stabilizes the mode in the linear theory.
+
+\section{Modal initial-value problem}
+
+Consider a periodic domain of length $L$.  The horizontal wavenumbers are
+\begin{equation}
+    k_n = \frac{2\pi n}{L},
+    \qquad n\in\mathbb{Z}.
+\end{equation}
+The zero mode is omitted in the notebook, since the instability calculation concerns nonzero interfacial perturbations.  The initial velocity is expanded as
+\begin{equation}
+    v_0(x)=\sum_{n\neq 0} \widehat{v}_n e^{i k_n x},
+\end{equation}
+with Fourier coefficients
+\begin{equation}
+    \widehat{v}_n
+    =
+    \frac{1}{L}\int_0^L v_0(x)e^{-i k_n x}\,dx.
+    \label{eq:fourier_coefficients}
+\end{equation}
+
+For each nonzero mode, define
+\begin{equation}
+    \lambda_n = \omega^2(|k_n|).
+\end{equation}
+The modal interface amplitude satisfies
+\begin{equation}
+    \frac{d^2 \widehat{\eta}_n}{dt^2}
+    =
+    \lambda_n \widehat{\eta}_n,
+    \label{eq:modal_ode}
+\end{equation}
+with initial conditions
+\begin{equation}
+    \widehat{\eta}_n(0)=0,
+    \qquad
+    \frac{d\widehat{\eta}_n}{dt}(0)=\widehat{v}_n.
+\end{equation}
+The solution is
+\begin{equation}
+    \widehat{\eta}_n(t)
+    =
+    \widehat{v}_n G(\lambda_n,t),
+    \label{eq:eta_hat_solution}
+\end{equation}
+where
+\begin{equation}
+    G(\lambda,t)=
+    \begin{cases}
+    \displaystyle \frac{\sinh(\sqrt{\lambda}\,t)}{\sqrt{\lambda}}, & \lambda\neq 0,\\[1.2em]
+    t, & \lambda=0.
+    \end{cases}
+    \label{eq:growth_kernel}
+\end{equation}
+Its time derivative is
+\begin{equation}
+    \partial_t G(\lambda,t)=
+    \begin{cases}
+    \cosh(\sqrt{\lambda}\,t), & \lambda\neq 0,\\[0.5em]
+    1, & \lambda=0.
+    \end{cases}
+    \label{eq:growth_kernel_derivative}
+\end{equation}
+If $\lambda<0$, these formulae are interpreted through complex arguments.  Equivalently, writing $\lambda=-\alpha^2$ with $\alpha>0$, one obtains
+\begin{equation}
+    G(-\alpha^2,t)=\frac{\sin(\alpha t)}{\alpha},
+    \qquad
+    \partial_tG(-\alpha^2,t)=\cos(\alpha t),
+\end{equation}
+which corresponds to stable capillary-gravity oscillations.
+
+The reconstructed interface displacement is
+\begin{equation}
+    \eta(x,t)
+    =
+    \operatorname{Re}
+    \left[
+    \sum_{n\neq 0}
+    \widehat{\eta}_n(t)e^{i k_n x}
+    \right].
+    \label{eq:eta_reconstruction}
+\end{equation}
+The interfacial vertical velocity is
+\begin{equation}
+    w(x,0,t)
+    =
+    \partial_t\eta(x,t)
+    =
+    \operatorname{Re}
+    \left[
+    \sum_{n\neq 0}
+    \widehat{v}_n\partial_tG(\lambda_n,t)e^{i k_n x}
+    \right].
+    \label{eq:interface_velocity}
+\end{equation}
+
+\section{Vertical velocity fields}
+
+The finite-depth vertical structure used in the notebook satisfies the impermeability conditions at the two walls.  If the interfacial vertical velocity amplitude of mode $n$ is denoted by
+\begin{equation}
+    \widehat{w}_n(0,t)
+    =
+    \widehat{v}_n\partial_tG(\lambda_n,t),
+\end{equation}
+then the upper-fluid vertical velocity is reconstructed using
+\begin{equation}
+    w_{1,n}(z,t)
+    =
+    \widehat{w}_n(0,t)
+    \frac{\sinh\left(|k_n|(H_1-z)\right)}{\sinh\left(|k_n|H_1\right)}.
+    \label{eq:upper_vertical_shape}
+\end{equation}
+Similarly, the lower-fluid vertical velocity is
+\begin{equation}
+    w_{2,n}(z,t)
+    =
+    \widehat{w}_n(0,t)
+    \frac{\sinh\left(|k_n|(z+H_2)\right)}{\sinh\left(|k_n|H_2\right)}.
+    \label{eq:lower_vertical_shape}
+\end{equation}
+Therefore,
+\begin{equation}
+    w_1(x,z,t)
+    =
+    \operatorname{Re}
+    \left[
+    \sum_{n\neq 0}
+    \widehat{w}_n(0,t)
+    \frac{\sinh\left(|k_n|(H_1-z)\right)}{\sinh\left(|k_n|H_1\right)}
+    e^{ik_nx}
+    \right],
+    \label{eq:w1_reconstruction}
+\end{equation}
+for $0<z<H_1$, and
+\begin{equation}
+    w_2(x,z,t)
+    =
+    \operatorname{Re}
+    \left[
+    \sum_{n\neq 0}
+    \widehat{w}_n(0,t)
+    \frac{\sinh\left(|k_n|(z+H_2)\right)}{\sinh\left(|k_n|H_2\right)}
+    e^{ik_nx}
+    \right],
+    \label{eq:w2_reconstruction}
+\end{equation}
+for $-H_2<z<0$.
+
+These formulae immediately imply
+\begin{equation}
+    w_1(x,H_1,t)=0,
+    \qquad
+    w_2(x,-H_2,t)=0,
+\end{equation}
+and
+\begin{equation}
+    w_1(x,0,t)=w_2(x,0,t)=\partial_t\eta(x,t).
+\end{equation}
+
+\section{Example used in the notebook}
+
+The notebook uses the parameter set
+\begin{equation}
+    \rho_1=2,
+    \qquad
+    \rho_2=1,
+    \qquad
+    g=9.81,
+    \qquad
+    \sigma=0.01,
+    \qquad
+    H_1=H_2=1,
+    \qquad
+    L=2\pi.
+\end{equation}
+The imposed initial interfacial velocity is
+\begin{equation}
+    v_0(x)=U_0\cos(3x)+\frac{2}{5}U_0\sin(5x),
+    \qquad
+    U_0=10^{-3}.
+    \label{eq:v0_example}
+\end{equation}
+Since $L=2\pi$, the nonzero exact Fourier coefficients are
+\begin{align}
+    \widehat{v}_{3} &= \frac{U_0}{2},
+    &
+    \widehat{v}_{-3} &= \frac{U_0}{2},\\
+    \widehat{v}_{5} &= -\frac{iU_0}{5},
+    &
+    \widehat{v}_{-5} &= \frac{iU_0}{5}.
+\end{align}
+The numerical notebook nevertheless computes the coefficients through a discrete periodic projection, which is more general and can be used for arbitrary smooth periodic profiles.
+
+\section{Discrete Fourier projection in the Mathematica notebook}
+
+The notebook uses a uniform grid
+\begin{equation}
+    x_m=\frac{mL}{N},
+    \qquad
+    m=0,1,\ldots,N-1,
+\end{equation}
+where $N=4096$.  The Fourier coefficient is approximated by the periodic trapezoidal rule
+\begin{equation}
+    \widehat{v}_n
+    \approx
+    \frac{1}{N}
+    \sum_{m=0}^{N-1}
+    v_0(x_m)e^{-ik_nx_m}.
+    \label{eq:discrete_fourier_projection}
+\end{equation}
+This avoids the convergence warnings caused by numerical quadrature when the exact coefficient is zero.  The Mathematica implementation also applies \texttt{Chop} to remove round-off residuals.
+
+\section{Verification conditions}
+
+The notebook verifies the initial conditions by computing
+\begin{equation}
+    \max_x |\eta(x,0)|,
+    \qquad
+    \max_x |\partial_t\eta(x,0)-v_0(x)|.
+\end{equation}
+For a sufficiently resolved Fourier truncation, both quantities should be close to machine precision.
+
+The wall boundary conditions are verified by computing
+\begin{equation}
+    \max_x |w_1(x,H_1,0)|,
+    \qquad
+    \max_x |w_2(x,-H_2,0)|.
+\end{equation}
+Because the vertical shape functions vanish exactly at the corresponding rigid walls, these errors should also be at the level of numerical round-off.
+
+\appendix
+\section{Core Mathematica implementation}
+
+The following listing contains the essential part of the corrected Mathematica notebook.
+
+\begin{lstlisting}[style=MathematicaStyle,language=Mathematica]
+Remove["Global`*"];
+
+pars = {
+   rho1 -> 2.0,
+   rho2 -> 1.0,
+   g -> 9.81,
+   sigma -> 0.01,
+   H1 -> 1.0,
+   H2 -> 1.0,
+   L -> 2 Pi
+};
+
+Lnum = N[L /. pars];
+
+omega2[k_] := (k (rho1 - rho2) g - sigma k^3)/
+              (rho1 Coth[k H1] + rho2 Coth[k H2]);
+
+omega2Num[k_?NumericQ] := N[omega2[k] /. pars];
+
+kCritical = Sqrt[((rho1 - rho2) g)/sigma] /. pars;
+
+tol = 10^-12;
+
+growthKernel[lambda_?NumericQ, t_?NumericQ] :=
+  If[Abs[lambda] < tol,
+     t,
+     Sinh[Sqrt[lambda] t]/Sqrt[lambda]
+  ];
+
+growthKernelDot[lambda_?NumericQ, t_?NumericQ] :=
+  If[Abs[lambda] < tol,
+     1,
+     Cosh[Sqrt[lambda] t]
+  ];
+
+U0 = 10^-3;
+
+v0Expr = U0 Cos[3 x] + (2/5) U0 Sin[5 x];
+
+v0[xVal_?NumericQ] := N[v0Expr /. x -> xVal];
+
+nMax = 32;
+
+kn[n_Integer] := 2 Pi n/Lnum;
+
+modes = Join[Range[-nMax, -1], Range[1, nMax]];
+
+nSamples = 4096;
+
+xGrid = N[Lnum Range[0, nSamples - 1]/nSamples];
+v0Grid = v0 /@ xGrid;
+
+Clear[vHat];
+
+vHat[n_Integer] := vHat[n] =
+  Chop[
+    (1/nSamples) Total[v0Grid Exp[-I kn[n] xGrid]],
+    10^-14
+  ];
+
+etaHat[n_Integer, tVal_?NumericQ] :=
+  vHat[n] growthKernel[omega2Num[Abs[kn[n]]], tVal];
+
+eta[xVal_?NumericQ, tVal_?NumericQ] :=
+  Re[
+    Total[
+      etaHat[#, tVal] Exp[I kn[#] xVal] & /@ modes
+    ]
+  ];
+
+wInterfaceHat[n_Integer, tVal_?NumericQ] :=
+  vHat[n] growthKernelDot[omega2Num[Abs[kn[n]]], tVal];
+
+wInterface[xVal_?NumericQ, tVal_?NumericQ] :=
+  Re[
+    Total[
+      wInterfaceHat[#, tVal] Exp[I kn[#] xVal] & /@ modes
+    ]
+  ];
+
+shape1[k_?NumericQ, zVal_?NumericQ] :=
+  Sinh[k ((H1 /. pars) - zVal)]/Sinh[k (H1 /. pars)];
+
+shape2[k_?NumericQ, zVal_?NumericQ] :=
+  Sinh[k (zVal + (H2 /. pars))]/Sinh[k (H2 /. pars)];
+
+w1[xVal_?NumericQ, zVal_?NumericQ, tVal_?NumericQ] :=
+  Re[
+    Total[
+      (wInterfaceHat[#, tVal]
+       shape1[Abs[kn[#]], zVal]
+       Exp[I kn[#] xVal]) & /@ modes
+    ]
+  ];
+
+w2[xVal_?NumericQ, zVal_?NumericQ, tVal_?NumericQ] :=
+  Re[
+    Total[
+      (wInterfaceHat[#, tVal]
+       shape2[Abs[kn[#]], zVal]
+       Exp[I kn[#] xVal]) & /@ modes
+    ]
+  ];
+
+checkGrid = N[Lnum Range[0, 512]/512];
+
+maxEtaInitialError =
+  Max[Abs[eta[#, 0] & /@ checkGrid]];
+
+maxVelocityInitialError =
+  Max[Abs[(wInterface[#, 0] - v0[#]) & /@ checkGrid]];
+
+maxUpperWallError =
+  Max[Abs[w1[#, H1 /. pars, 0] & /@ checkGrid]];
+
+maxLowerWallError =
+  Max[Abs[w2[#, -(H2 /. pars), 0] & /@ checkGrid]];
+
+{
+  maxEtaInitialError,
+  maxVelocityInitialError,
+  maxUpperWallError,
+  maxLowerWallError
+}
+\end{lstlisting}
+
+\end{document}
