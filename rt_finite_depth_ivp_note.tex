@@ -429,6 +429,182 @@ When $\rho_1>\rho_2$, the critical wavenumber at which the numerator changes sig
 \end{equation}
 For $0<k<k_c$, the numerator of \eqref{eq:dispersion_relation} is positive, and the corresponding modes are Rayleigh--Taylor unstable.  For $k>k_c$, surface tension stabilizes the mode in the linear theory.
 
+\section{Adapted normal-mode result from the shared derivation}
+
+The shared derivation uses a different but closely related linear method.  It assumes semi-infinite viscous fluids and writes each perturbation as a normal mode,
+\begin{equation}
+    f'(x,z,t)=\widetilde{f}(z)e^{i\kappa x+st},
+    \qquad
+    k=|\kappa|.
+    \label{eq:shared_normal_mode_ansatz}
+\end{equation}
+Here $s$ is a temporal growth rate obtained from a dispersion relation.  To avoid conflicting with the indexing convention of this note, denote the upper semi-infinite fluid by $u$ and the lower semi-infinite fluid by $\ell$ in this section.
+
+\subsection{Viscous semi-infinite vertical velocities}
+
+In the shared method, the bulk equations are the linearized incompressible Navier--Stokes equations,
+\begin{equation}
+    \nabla\cdot \bm{U}'_j=0,
+    \qquad
+    \partial_t\bm{U}'_j
+    =
+    -\frac{1}{\rho_j}\nabla P'_j
+    +
+    \nu_j\nabla^2\bm{U}'_j,
+    \qquad
+    \nu_j=\frac{\mu_j}{\rho_j}.
+    \label{eq:shared_linear_ns}
+\end{equation}
+After substituting \eqref{eq:shared_normal_mode_ansatz}, the derivative rules are
+\begin{equation}
+    \partial_t\mapsto s,
+    \qquad
+    \partial_x\mapsto i\kappa,
+    \qquad
+    \nabla^2\mapsto D^2-k^2,
+    \qquad
+    D=\frac{d}{dz}.
+\end{equation}
+Incompressibility gives
+\begin{equation}
+    i\kappa \widetilde{U}_{jx}+D\widetilde{U}_{jz}=0.
+\end{equation}
+Taking the curl of the linearized momentum equation removes the pressure and gives the vorticity-diffusion equation.  Written only in terms of the vertical velocity amplitude, this is
+\begin{equation}
+    \left[s-\nu_j(D^2-k^2)\right](D^2-k^2)\widetilde{U}_{jz}=0.
+    \label{eq:shared_viscous_vertical_ode}
+\end{equation}
+Thus the characteristic roots are
+\begin{equation}
+    r=\pm k,
+    \qquad
+    r=\pm q_j,
+    \qquad
+    q_j^2=k^2+\frac{s}{\nu_j}.
+    \label{eq:shared_q_definition}
+\end{equation}
+The $r=\pm k$ roots are the harmonic, potential-flow part; the $r=\pm q_j$ roots are the viscous vorticity-diffusion part.
+
+For semi-infinite fluids, the perturbations must decay away from the interface.  If the lower fluid occupies $z<0$ and the upper fluid occupies $z>0$, the admissible vertical velocities are
+\begin{align}
+    U'_{\ell z}
+    &=
+    \left(
+    A_{\ell}e^{kz}
+    +
+    A'_{\ell}e^{q_{\ell}z}
+    \right)e^{i\kappa x+st},
+    \qquad z<0,
+    \label{eq:shared_lower_velocity}\\
+    U'_{u z}
+    &=
+    \left(
+    A_{u}e^{-kz}
+    +
+    A'_{u}e^{-q_{u}z}
+    \right)e^{i\kappa x+st},
+    \qquad z>0.
+    \label{eq:shared_upper_velocity}
+\end{align}
+The amplitudes are not fixed by the bulk equations alone.  They are determined by interfacial kinematic, velocity-continuity, stress, and any additional physical jump conditions.  The condition for a nonzero amplitude vector gives the dispersion relation for $s$.
+
+\subsection{Single-mode interface evolution}
+
+The shared derivation also assumes the interface has the same normal-mode dependence,
+\begin{equation}
+    H(x,t)=B e^{i\kappa x+st}.
+\end{equation}
+In real form, for a cosine perturbation,
+\begin{equation}
+    H(x,t)=a e^{st}\cos(kx).
+    \label{eq:shared_interface_evolution}
+\end{equation}
+The linearized kinematic condition at $z=0$ gives
+\begin{equation}
+    \partial_t H = U'_{\ell z}=U'_{u z}.
+\end{equation}
+For example, from the lower side,
+\begin{equation}
+    sB=A_{\ell}+A'_{\ell},
+    \qquad
+    B=\frac{A_{\ell}+A'_{\ell}}{s}.
+\end{equation}
+Thus the amplitude $a$ in \eqref{eq:shared_interface_evolution} is the initial displacement amplitude:
+\begin{equation}
+    H(x,0)=a\cos(kx).
+\end{equation}
+If the spike height is evaluated at $x=\lambda/2$, where $k=2\pi/\lambda$, then
+\begin{equation}
+    H(\lambda/2,t)
+    =
+    a e^{st}\cos(\pi)
+    =
+    -a e^{st}.
+\end{equation}
+
+\subsection{How the two methods differ}
+
+The finite-depth notebook method and the shared normal-mode method are consistent in their common inviscid, deep-water limit, but they solve different linear problems.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Bulk model.}
+    The present note assumes inviscid, irrotational flow, so each velocity potential satisfies Laplace's equation.  The shared derivation uses viscous linearized Navier--Stokes equations.  This adds the $q_j$ roots in \eqref{eq:shared_q_definition}, which are absent from the potential-flow note.
+
+    \item \textbf{Vertical structure.}
+    The present note uses finite-depth eigenfunctions satisfying rigid-wall impermeability:
+    \begin{equation}
+        \frac{\sinh(k(H_1-z))}{\sinh(kH_1)},
+        \qquad
+        \frac{\sinh(k(z+H_2))}{\sinh(kH_2)}.
+    \end{equation}
+    The shared derivation uses semi-infinite decay conditions and therefore obtains exponentials.  In the deep-water limit,
+    \begin{equation}
+        \frac{\sinh(k(H_1-z))}{\sinh(kH_1)}
+        \to e^{-kz},
+        \qquad
+        \frac{\sinh(k(z+H_2))}{\sinh(kH_2)}
+        \to e^{kz},
+    \end{equation}
+    so the $e^{\mp kz}$ pieces agree with the potential-flow part of the shared method.
+
+    \item \textbf{How time dependence is obtained.}
+    The present note first derives $\lambda=\omega^2(k)$ and then solves the second-order modal initial-value problem
+    \begin{equation}
+        \frac{d^2\widehat{\eta}}{dt^2}=\lambda\widehat{\eta}.
+    \end{equation}
+    The shared derivation assumes the time dependence $e^{st}$ from the beginning and finds admissible $s$ from a dispersion relation.
+
+    \item \textbf{Initial data.}
+    The notebook problem imposes a flat initial interface and a prescribed initial interface velocity,
+    \begin{equation}
+        \widehat{\eta}(0)=0,
+        \qquad
+        \partial_t\widehat{\eta}(0)=\widehat{v}.
+    \end{equation}
+    For an unstable mode with $\lambda=s^2>0$, this gives
+    \begin{equation}
+        \widehat{\eta}(t)=\frac{\widehat{v}}{s}\sinh(st)
+        =
+        \frac{\widehat{v}}{2s}\left(e^{st}-e^{-st}\right).
+    \end{equation}
+    The shared result instead prescribes an initial displacement and keeps the growing normal-mode branch,
+    \begin{equation}
+        H(x,0)=a\cos(kx),
+        \qquad
+        H(x,t)=a e^{st}\cos(kx).
+    \end{equation}
+    In the second-order notation, this corresponds to initial data
+    \begin{equation}
+        \widehat{\eta}(0)=a,
+        \qquad
+        \partial_t\widehat{\eta}(0)=sa,
+    \end{equation}
+    which removes the decaying branch.
+
+    \item \textbf{Dispersion relation.}
+    The present note has the explicit inviscid finite-depth formula \eqref{eq:dispersion_relation}.  The shared method obtains $s$ from a determinant condition involving the viscous amplitudes, stress balances, and any extra interfacial physics.  Its dispersion relation is therefore generally more complicated and depends on viscosities through $q_j$.
+\end{itemize}
+
 \section{Modal initial-value problem}
 
 Consider a periodic domain of length $L$.  The horizontal wavenumbers are
