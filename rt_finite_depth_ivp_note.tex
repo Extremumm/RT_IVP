@@ -73,6 +73,171 @@ The initial-value problem considered in the notebook is
 \end{equation}
 Thus, the interface is initially flat, and the perturbation is introduced through the initial vertical velocity at the interface.
 
+\section{Mathematical background}
+
+This section records the mathematical ingredients used later in the note.  The goal is to make clear where the modal equation, the finite-depth factors, and the verification tests come from.
+
+\subsection{Linearized potential-flow model}
+
+Each fluid is assumed inviscid, incompressible, and irrotational.  Therefore the perturbation velocity in fluid $j$ can be represented by a velocity potential
+\begin{equation}
+    \bm{u}_j = (u_j,w_j)=\nabla \phi_j,
+    \qquad j=1,2.
+\end{equation}
+Incompressibility gives
+\begin{equation}
+    \nabla\cdot \bm{u}_j=0,
+\end{equation}
+and hence the potentials satisfy Laplace's equation in their respective fluid domains,
+\begin{equation}
+    \partial_{xx}\phi_j+\partial_{zz}\phi_j=0.
+    \label{eq:laplace_potential}
+\end{equation}
+The rigid walls are impermeable, so the normal velocity vanishes there:
+\begin{equation}
+    \partial_z\phi_1(x,H_1,t)=0,
+    \qquad
+    \partial_z\phi_2(x,-H_2,t)=0.
+    \label{eq:potential_wall_conditions}
+\end{equation}
+
+The interface is the material surface $F(x,z,t)=z-\eta(x,t)=0$.  The kinematic condition $D_tF=0$ gives
+\begin{equation}
+    \partial_t\eta + u_j\partial_x\eta = w_j
+    \qquad \text{on } z=\eta(x,t).
+\end{equation}
+After linearizing about the flat state $\eta=0$ and neglecting products of perturbation quantities, this becomes
+\begin{equation}
+    \partial_t\eta(x,t)=\partial_z\phi_1(x,0,t)
+    =
+    \partial_z\phi_2(x,0,t).
+    \label{eq:linear_kinematic_condition}
+\end{equation}
+This condition is why the interface velocity used in the notebook is simply $\partial_t\eta$.
+
+\subsection{Fourier modes and finite-depth eigenfunctions}
+
+Because the coefficients and boundaries are independent of $x$, a Fourier mode evolves independently in the linear theory.  For a nonzero mode
+\begin{equation}
+    \phi_j(x,z,t)=\widehat{\phi}_{j}(z,t)e^{ikx},
+    \qquad k>0,
+\end{equation}
+Laplace's equation \eqref{eq:laplace_potential} reduces to
+\begin{equation}
+    \frac{d^2\widehat{\phi}_j}{dz^2}-k^2\widehat{\phi}_j=0.
+\end{equation}
+The finite-depth wall conditions \eqref{eq:potential_wall_conditions} select hyperbolic functions.  Writing the modal interfacial velocity as
+\begin{equation}
+    \widehat{W}(t)=\partial_t\widehat{\eta}(t),
+\end{equation}
+the vertical velocities are
+\begin{align}
+    \widehat{w}_1(z,t)
+    &=
+    \widehat{W}(t)
+    \frac{\sinh(k(H_1-z))}{\sinh(kH_1)},
+    \label{eq:background_upper_shape}\\
+    \widehat{w}_2(z,t)
+    &=
+    \widehat{W}(t)
+    \frac{\sinh(k(z+H_2))}{\sinh(kH_2)}.
+    \label{eq:background_lower_shape}
+\end{align}
+These shapes equal $\widehat{W}$ at the interface and vanish at the rigid walls.  Integrating once in $z$ gives the interface values of the velocity potentials,
+\begin{equation}
+    \widehat{\phi}_1(0,t)
+    =
+    -\frac{\coth(kH_1)}{k}\,\partial_t\widehat{\eta}(t),
+    \qquad
+    \widehat{\phi}_2(0,t)
+    =
+    \frac{\coth(kH_2)}{k}\,\partial_t\widehat{\eta}(t).
+    \label{eq:interface_potentials}
+\end{equation}
+The factors $\rho_1\coth(kH_1)$ and $\rho_2\coth(kH_2)$ that appear in the dispersion relation come from these interface potential values.  They represent the finite-depth inertial loading of the two fluids on the moving interface.
+
+\subsection{Dynamic condition and surface tension}
+
+The linearized unsteady Bernoulli relation gives the perturbation pressure in each fluid.  Evaluated at the displaced interface and retaining the hydrostatic contribution from moving the interface by $\eta$, the pressure jump can be written as
+\begin{equation}
+    p_1-p_2
+    =
+    -\rho_1\partial_t\phi_1(x,0,t)
+    +\rho_2\partial_t\phi_2(x,0,t)
+    -(\rho_1-\rho_2)g\eta.
+    \label{eq:linear_pressure_jump}
+\end{equation}
+With the sign convention used in this note, the linearized capillary pressure jump is
+\begin{equation}
+    p_1-p_2=\sigma\partial_{xx}\eta.
+\end{equation}
+Equivalently,
+\begin{equation}
+    \rho_1\partial_t\phi_1(x,0,t)
+    -\rho_2\partial_t\phi_2(x,0,t)
+    +(\rho_1-\rho_2)g\eta
+    =
+    -\sigma\partial_{xx}\eta.
+    \label{eq:linear_dynamic_condition}
+\end{equation}
+For a Fourier mode, $-\partial_{xx}\eta=k^2\eta$.  Substituting \eqref{eq:interface_potentials} into \eqref{eq:linear_dynamic_condition} gives
+\begin{equation}
+    -\frac{\rho_1\coth(kH_1)+\rho_2\coth(kH_2)}{k}\,
+    \partial_{tt}\widehat{\eta}
+    +(\rho_1-\rho_2)g\widehat{\eta}
+    =
+    \sigma k^2\widehat{\eta}.
+\end{equation}
+Solving for $\partial_{tt}\widehat{\eta}$ yields the modal growth coefficient used throughout the note.
+
+\subsection{Stability information in the dispersion relation}
+
+For $k>0$ the denominator
+\begin{equation}
+    D(k)=\rho_1\coth(kH_1)+\rho_2\coth(kH_2)
+\end{equation}
+is positive.  Hence stability is determined by the sign of the numerator
+\begin{equation}
+    k(\rho_1-\rho_2)g-\sigma k^3.
+\end{equation}
+The gravitational term is destabilizing when the upper fluid is heavier than the lower fluid, $\rho_1>\rho_2$.  The capillary term is stabilizing and grows like $k^3$, so sufficiently short waves oscillate rather than grow.
+
+The finite-depth factors modify the effective inertia.  In the deep-water limit $kH_1,kH_2\gg 1$, $\coth(kH_j)\to 1$ and the denominator approaches $\rho_1+\rho_2$.  In the shallow, long-wave limit $kH_j\ll 1$, $\coth(kH_j)\sim 1/(kH_j)$, so the denominator becomes large and the growth of very long waves is reduced by the rigid boundaries.
+
+\subsection{Initial-value interpretation}
+
+The modal equation has the form
+\begin{equation}
+    \frac{d^2\widehat{\eta}}{dt^2}
+    =
+    \lambda\,\widehat{\eta},
+\end{equation}
+where $\lambda=\omega^2(k)$ in the convention of this note.  The kernel $G(\lambda,t)$ used below is the Green's function for the initial data
+\begin{equation}
+    G(\lambda,0)=0,
+    \qquad
+    \partial_tG(\lambda,0)=1.
+\end{equation}
+Therefore $\widehat{\eta}(t)=\widehat{v}\,G(\lambda,t)$ automatically enforces a flat initial interface and an imposed initial velocity $\widehat{v}$.  Positive $\lambda$ gives hyperbolic growth, negative $\lambda$ gives trigonometric oscillation, and the case $\lambda=0$ is obtained by the continuous limit $G(0,t)=t$.
+
+For a real initial velocity profile, the Fourier coefficients satisfy the conjugate symmetry
+\begin{equation}
+    \widehat{v}_{-n}=\overline{\widehat{v}_n}.
+\end{equation}
+The reconstructed interface is real for this reason; taking the real part in the implementation is a robust numerical way to remove tiny imaginary round-off residuals.
+
+\subsection{Discrete projection and verification}
+
+The notebook computes Fourier coefficients with a discrete periodic projection.  This is the discrete Fourier transform normalized to match the continuous convention
+\begin{equation}
+    \widehat{v}_n
+    =
+    \frac{1}{L}\int_0^L v_0(x)e^{-ik_nx}\,dx.
+\end{equation}
+For smooth periodic data, the periodic trapezoidal rule converges rapidly, and for trigonometric data whose modes are resolved by the grid it recovers the exact coefficients up to floating-point round-off.
+
+The verification tests follow directly from the kernel and shape functions.  Since $G(\lambda,0)=0$, one should have $\eta(x,0)=0$.  Since $\partial_tG(\lambda,0)=1$, one should have $\partial_t\eta(x,0)=v_0(x)$ after reconstruction.  Finally, the hyperbolic sine factors in \eqref{eq:background_upper_shape}--\eqref{eq:background_lower_shape} vanish at $z=H_1$ and $z=-H_2$, so the wall velocity checks should be zero up to numerical round-off.
+
 \section{Finite-depth dispersion relation}
 
 For a Fourier mode with horizontal wavenumber $k>0$, the corrected finite-depth dispersion relation used in the notebook is
